@@ -17,8 +17,7 @@ All notable changes to `tau-ctrl` are documented here. Format loosely follows
 - **Adaptive spine** — `Trainer.auto(...)` probes env + hardware and dispatches
   to the fastest correct execution strategy; `probe_env` / `probe_hardware` /
   `select_strategy` exposed for transparency.
-- Benchmarks under `benchmarks/` comparing tau-ctrl vs Stable-Baselines3 and
-  skrl (see `benchmarks/RESULTS.md`).
+- Benchmarks under `benchmarks/` comparing tau-ctrl against other libraries (see `benchmarks/RESULTS.md`).
 
 ### Changed
 - `gymnasium` is now a **core** dependency (the vectorized/adapter machinery is

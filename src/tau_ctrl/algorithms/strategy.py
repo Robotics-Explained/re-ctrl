@@ -2,15 +2,15 @@
 execution strategy, dispatch. One ``Trainer.auto(...)`` call adapts to whatever
 you hand it, so tau-ctrl generalizes past any single env.
 
-SB3 has one execution model (CPU vector env, synchronous collect-then-update)
-regardless of what env you give it. The whole speed argument for tau-ctrl is
-that wall-clock-to-reward is bounded by the *slower* of collection and update,
-and which one dominates depends on the env — so a general framework must detect
-the regime and route to the matching engine:
+Standard frameworks typically support a single execution model (e.g., CPU vector envs,
+synchronous collect-then-update) regardless of the target environment. The whole
+speed argument for tau-ctrl is that wall-clock-to-reward is bounded by the *slower* of
+collection and update, and which one dominates depends on the env — so a general
+framework must detect the regime and route to the matching engine:
 
     ON_DEVICE_VECTORIZED  env already batched + on GPU (MJX/Brax via dlpack,
-                          Isaac Gym, or a native TorchVecEnv) → 10-100x, the
-                          real win; SB3 can't do this at all.
+                          Isaac Gym, or a native TorchVecEnv) → 10-100x speedup
+                          by running everything on-device.
     GYM_VECTOR_ADAPTED    a gymnasium.vector.VectorEnv (numpy/CPU) → batched
                           update on device, collection stays CPU.
     SYNC_VEC              a single non-batchable env replicated N times, stepped
@@ -192,7 +192,7 @@ def select_strategy(
         why = (
             f"Env is a native on-device TorchVecEnv ({ec.backend}, on_device={ec.on_device}). "
             "Best case: env stepping AND the gradient update run batched on the target "
-            "device — the regime where tau-ctrl beats SB3 10-100x (SB3's VecEnv can't). "
+            "device — the regime that maximizes GPU throughput by avoiding CPU-GPU synchronization. "
             f"Scaling updates_per_step→{ups} so {n} fresh transitions/step actually train."
         )
         return Plan(Strategy.ON_DEVICE_VECTORIZED, n, dev, ups, why)
@@ -225,7 +225,7 @@ def select_strategy(
 
     why = (
         "Single env, not replicable (e.g. a real robot). Physics can't be parallelised — "
-        "only the gradient update is GPU-accelerated. Honest regime: beat SB3 here on "
+        "only the gradient update is GPU-accelerated. Honest regime: focus on "
         "sample efficiency (fewer env steps to reward), not raw throughput. Use SAC/TD3."
     )
     return Plan(Strategy.SINGLE_ENV, 1, dev, 1, why)

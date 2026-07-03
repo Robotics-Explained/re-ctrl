@@ -1,9 +1,9 @@
-"""Core abstractions for tau-ctrl's algorithm framework — an SB3-like,
-simulator-agnostic controller framework over a Gymnasium environment.
+"""Core abstractions for tau-ctrl's algorithm framework — a simulator-agnostic
+controller framework over a Gymnasium environment.
 
 Every method (PID, MPPI, CEM-MPC, CBF safety filter, PPO, ...) implements the
-same :class:`BaseController` interface — ``predict(obs) -> action`` like SB3,
-plus an optional ``learn()`` for the ones that train. Nothing here imports a
+same :class:`BaseController` interface — ``predict(obs) -> action``, plus
+an optional ``learn()`` for the ones that train. Nothing here imports a
 simulator: controllers talk only to the ``gymnasium.Env`` API. Methods that
 need to roll the dynamics forward (MPPI, CEM, CBF) do so through the optional
 *branching* capability (:func:`get_state` / :func:`set_state`), which any env
@@ -37,7 +37,7 @@ def register(name: str):
 
 
 def make(name: str, env: Any, **kwargs: Any) -> "BaseController":
-    """Construct a controller by name, SB3-style: ``make("mppi", env, ...)``."""
+    """Construct a controller by name: ``make("mppi", env, ...)``."""
     if name not in _REGISTRY:
         raise KeyError(f"unknown controller {name!r}; available: {sorted(_REGISTRY)}")
     return _REGISTRY[name](env, **kwargs)
@@ -131,7 +131,7 @@ def resolve_device(pref: str = "auto") -> str:
 # ---------------------------------------------------------------------------
 
 class BaseController(ABC):
-    """SB3-like controller: ``predict`` always; ``learn`` when trainable."""
+    """Base controller: ``predict`` always; ``learn`` when trainable."""
 
     name: str = "base"
     manifest: ControllerManifest
@@ -164,7 +164,7 @@ class BaseController(ABC):
     def predict(
         self, obs: Any, state: Any = None, deterministic: bool = True
     ) -> tuple[np.ndarray, Any]:
-        """Return ``(action, next_internal_state)`` — SB3 signature."""
+        """Return ``(action, next_internal_state)``."""
 
     def learn(self, total_timesteps: int = 0, **kwargs: Any) -> "BaseController":
         """Train the controller. Analytic controllers are no-ops."""

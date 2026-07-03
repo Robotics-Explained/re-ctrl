@@ -1,6 +1,6 @@
-"""GPU-vectorized RL — the path to real (10-50x) speedup over SB3.
+"""GPU-vectorized RL — the path to real (10-50x) speedup.
 
-SB3's VecEnv steps CPU environments in subprocesses; the policy update is a
+Standard vector environments step CPU environments in subprocesses; the policy update is a
 tiny GPU (or CPU) op sandwiched between per-step Python. tau-ctrl instead runs
 ``num_envs`` environments *and* the update entirely on-device, so nothing
 crosses the Python/numpy boundary in the hot loop and each step feeds a large

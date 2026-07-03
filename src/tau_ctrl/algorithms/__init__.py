@@ -1,12 +1,11 @@
-"""tau-ctrl's SB3-like, simulator-agnostic controller/algorithm framework.
+"""tau-ctrl's simulator-agnostic controller/algorithm framework.
 
-One interface for the whole controller spectrum over a Gymnasium env, called
-the way you'd call SB3:
+One interface for the whole controller spectrum over a Gymnasium env:
 
     from tau_ctrl import make, PID, MPPI, CEM, ICEM, ILQR, CBFFilter, PPO, SAC, TD3
 
     ctrl = make("mppi", env, horizon=25, n_samples=200)   # or PID(env), PPO(env), ...
-    action, _ = ctrl.predict(obs)                          # SB3-style
+    action, _ = ctrl.predict(obs)                          # returns action, next_state
     ctrl.learn(total_timesteps=100_000)                    # for trainable ones (ppo/sac/td3)
 
 Design goals:

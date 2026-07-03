@@ -1,8 +1,8 @@
 """A compact, self-contained PPO (continuous actions) in PyTorch.
 
-SB3-like surface (``learn`` / ``predict`` / ``save`` / ``load``) but our own
-implementation so tau-ctrl doesn't depend on stable-baselines3. Runs on GPU
-automatically when torch reports CUDA available (``device="auto"``), else CPU.
+Standard surface (``learn`` / ``predict`` / ``save`` / ``load``) implementation.
+Runs on GPU automatically when torch reports CUDA available (``device="auto"``),
+else CPU.
 
 Simulator-agnostic: talks only to the Gymnasium env's ``reset``/``step``.
 Kept intentionally small (single-env on-policy rollouts, GAE, clipped

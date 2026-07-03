@@ -1,9 +1,9 @@
 """GPU-vectorized environments — the piece that unlocks real GPU speedup.
 
-SB3 (and tau-ctrl's single-env ``learn()``) step one CPU environment at a
-time: one transition, one tiny update, ~100 sequential CUDA kernel launches
-per step.  At that granularity kernel-launch latency dwarfs the actual math,
-so "putting the network on the GPU" caps out at ~1.3x.
+Single-environment training loops (and tau-ctrl's single-env ``learn()``) step
+one CPU environment at a time: one transition, one tiny update, ~100 sequential
+CUDA kernel launches per step.  At that granularity kernel-launch latency dwarfs
+the actual math, so "putting the network on the GPU" caps out at ~1.3x.
 
 A :class:`TorchVecEnv` instead advances ``num_envs`` environments *in
 parallel*, entirely as batched tensor ops on the target device.  Nothing

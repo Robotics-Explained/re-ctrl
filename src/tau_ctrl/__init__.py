@@ -1,12 +1,12 @@
 """
-tau-ctrl — an SB3-like, simulator-agnostic controller/algorithm framework.
+tau-ctrl — a simulator-agnostic controller/algorithm framework.
 
-Call algorithms directly off the package, the way you would with SB3:
+Call algorithms directly off the package:
 
     from tau_ctrl import make, PID, MPPI, CEM, ICEM, ILQR, CBFFilter, PPO, SAC, TD3
 
     ctrl = make("mppi", env, horizon=25, n_samples=200)   # or PID(env), PPO(env), ...
-    action, _ = ctrl.predict(obs)                          # SB3-style
+    action, _ = ctrl.predict(obs)                          # returns action, next_state
     ctrl.learn(total_timesteps=100_000)                    # trainable methods (ppo/sac/td3)
 
 Every algorithm shares one interface (``predict``/``learn``/``save``/``load``)

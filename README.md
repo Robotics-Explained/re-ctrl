@@ -1,8 +1,8 @@
 # tau-ctrl
 
-**SB3-like, simulator-agnostic control algorithms — feedback, sampling-based MPC, safety filtering, and GPU-native RL behind one interface.**
+**Simulator-agnostic control algorithms — feedback, sampling-based MPC, safety filtering, and GPU-native RL behind one interface.**
 
-Like Stable-Baselines3, but for the whole controller spectrum, over any `gymnasium.Env`. No simulator dependency: works with whatever hands you an env (e.g. [tau-sim](https://tau-intelligence.com/tau_sim/)). Unlike SB3, the RL methods train **on-device** and scale to vectorized environments for real GPU speedup.
+A unified library for the whole controller spectrum, over any `gymnasium.Env`. No simulator dependency: works with whatever hands you an env (e.g. [tau-sim](https://tau-intelligence.com/tau_sim/)). The RL methods train **on-device** and scale to vectorized environments for real GPU speedup.
 
 ## Installation
 
@@ -17,7 +17,7 @@ pip install tau-ctrl[torch]     # + RL: PPO, SAC, TD3, and vectorized on-device 
 from tau_ctrl import make
 
 ctrl = make("mppi", env, horizon=25, n_samples=300)   # or MPPI(env, ...), SAC(env), ...
-action, _ = ctrl.predict(obs)                          # SB3-style
+action, _ = ctrl.predict(obs)                          # standard interface
 ctrl.learn(total_timesteps=100_000)                    # trainable methods (ppo/sac/td3)
 ctrl.save("ctrl.pkl")
 ```
@@ -44,7 +44,7 @@ seeding of torch's RNG).
 
 ## GPU-native RL: vectorized, on-device training
 
-SB3 steps CPU environments and the policy update sits behind per-step Python.
+Standard pipelines step CPU environments sequentially and perform updates in slow Python loops.
 tau-ctrl's SAC/TD3 instead run the replay buffer and the update **on the target
 device**, and — given a batched env — step thousands of environments in parallel
 with no numpy in the hot loop. `Trainer.auto` probes your env and hardware and
@@ -68,8 +68,7 @@ action, _ = model.predict(obs)
 | a single, non-batchable env (PyBullet, classic MuJoCo) + a factory | `SyncTorchVecEnv` | batched update on device |
 | one env you can't replicate (a real robot) | — (single-env path) | only the update |
 
-See [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) for head-to-head numbers vs
-Stable-Baselines3 and skrl, and [`examples/`](examples/) for runnable scripts
+See [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) for performance comparison benchmarks, and [`examples/`](examples/) for runnable scripts
 (`quickstart.py`, `vectorized_rl.py`, `adaptive_training.py`).
 
 ## Safety filtering
@@ -111,4 +110,3 @@ Apache 2.0 — see [LICENSE](LICENSE).
 ## Related
 
 - [tau-sim](https://tau-intelligence.com/tau_sim/) — robotics environment builder
-- [Stable-Baselines3](https://stable-baselines3.readthedocs.io/) — RL algorithms (API inspiration)

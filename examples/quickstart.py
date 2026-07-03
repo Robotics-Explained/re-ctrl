@@ -1,7 +1,6 @@
-"""tau-ctrl — SB3-like usage across the whole controller spectrum.
+"""tau-ctrl — unified interface usage across the whole controller spectrum.
 
-Every algorithm shares the same interface over a Gymnasium env, called
-directly off the package like SB3:
+Every algorithm shares the same interface over a Gymnasium env:
 
     from tau_ctrl import make
     ctrl = make(name, env, **kw)
