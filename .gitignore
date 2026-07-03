@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+.env
+
+# IDE / tooling
+.vscode/
+.idea/
+.claude/
+*.log
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MuJoCo
+*.mjb
+MUJOCO_LOG.TXT
+

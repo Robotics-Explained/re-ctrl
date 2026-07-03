@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tau-ctrl"
+version = "0.1.0"
+description = "SB3-like, simulator-agnostic control algorithms over any gymnasium.Env — PID, MPPI/CEM/iCEM, iLQR, CBF, and GPU-native RL (PPO/SAC/TD3) with vectorized on-device training"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Tau Intelligence"},
+]
+keywords = [
+    "robotics", "control", "controller", "reinforcement-learning",
+    "mpc", "mppi", "cem", "ilqr", "cbf", "pid",
+    "sac", "td3", "ppo", "gymnasium", "gpu",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# gymnasium is core: the whole framework (spaces, envs, vectorized adapters) is
+# built on the gymnasium.Env interface, and `import tau_ctrl` uses it directly.
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "gymnasium>=0.29",
+]
+
+[project.optional-dependencies]
+# The learned methods (PPO/SAC/TD3) and all on-device / vectorized training.
+torch = [
+    "torch>=2.0",
+]
+# Everything needed to run the benchmark suite under benchmarks/.
+benchmark = [
+    "torch>=2.0",
+    "stable-baselines3>=2.0",
+    "skrl>=1.4",
+]
+dev = [
+    "torch>=2.0",
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.4",
+    "mypy>=1.0",
+]
+
+[project.urls]
+Homepage = "https://tau-intelligence.com/"
+Repository = "https://github.com/tau-intelligence/tau-ctrl"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+tau_ctrl = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
