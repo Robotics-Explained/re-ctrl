@@ -13,7 +13,13 @@ from typing import Any
 
 import numpy as np
 
-from .base import BaseController, ControllerManifest, register
+from .base import (
+    BaseController,
+    ControllerManifest,
+    register,
+    require_box_action_space,
+    require_torch,
+)
 from .off_policy import (
     ReplayBuffer,
     build_mlp,
@@ -25,8 +31,7 @@ from .off_policy import (
 
 
 def _torch():
-    import torch  # noqa: PLC0415
-    return torch
+    return require_torch()
 
 
 @register("td3")
@@ -57,6 +62,7 @@ class TD3(BaseController):
         super().__init__(env, **kw)
 
     def _setup(self) -> None:
+        require_box_action_space(self.action_space, "TD3")
         torch = _torch()
         import torch.nn as nn
 

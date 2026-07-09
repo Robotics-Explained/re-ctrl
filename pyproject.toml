@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tau-ctrl"
-version = "0.1.1"
+version = "0.2.0"
 description = "Simulator-agnostic control algorithms over any gymnasium.Env — PID, MPPI/CEM/iCEM, iLQR, CBF, and GPU-native RL (PPO/SAC/TD3) with vectorized on-device training"
 readme = "README.md"
 license = {text = "Apache-2.0"}

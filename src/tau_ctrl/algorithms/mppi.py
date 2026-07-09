@@ -56,6 +56,12 @@ class _SamplingMPC(BaseController):
     def _setup(self) -> None:
         self.nu = self.action_dim
         self._nominal = np.zeros((self.horizon, self.nu))
+        # Roll candidate sequences out against the *unwrapped* env. get_state /
+        # set_state already operate on env.unwrapped, so stepping the wrapped env
+        # here would leak into stateful wrappers (TimeLimit._elapsed_steps,
+        # OrderEnforcing) and corrupt/terminate the live episode — while the
+        # dynamics and reward are identical either way.
+        self._rollout_env = getattr(self.env, "unwrapped", self.env)
         self._venv = None
         if self._vector_env_fn is not None:
             self._venv = self._vector_env_fn(self.n_samples)
@@ -101,7 +107,7 @@ class _SamplingMPC(BaseController):
             set_state(self.env, state0)
             disc = 1.0
             for h in range(self.horizon):
-                _, r, term, trunc, _ = self.env.step(seqs[k, h])
+                _, r, term, trunc, _ = self._rollout_env.step(seqs[k, h])
                 R[k] += disc * r
                 disc *= self.gamma
                 if term or trunc:

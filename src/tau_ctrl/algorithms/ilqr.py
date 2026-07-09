@@ -56,6 +56,11 @@ class ILQR(BaseController):
         state0 = get_state(self.env)
         self.nx = int(np.asarray(state0).size)
         self._u_nom = np.zeros((self.horizon, self.nu))
+        # Probe/roll out against the *unwrapped* env (see MPPI): stepping the
+        # wrapped env would trip TimeLimit truncation mid-rollout (producing a
+        # short trajectory and an IndexError in the backward pass) and corrupt
+        # the live episode's wrapper state.
+        self._rollout_env = getattr(self.env, "unwrapped", self.env)
 
     def reset(self) -> None:
         self._u_nom[:] = 0.0
@@ -67,7 +72,7 @@ class ILQR(BaseController):
         """One step from (x, u): returns (next_state, reward)."""
         set_state(self.env, x)
         u = self._clip_action(u)
-        _, r, _, _, _ = self.env.step(u)
+        _, r, _, _, _ = self._rollout_env.step(u)
         return np.asarray(get_state(self.env), dtype=float), float(r)
 
     def _linearize(self, x: np.ndarray, u: np.ndarray):
@@ -112,7 +117,7 @@ class ILQR(BaseController):
         for t in range(self.horizon):
             set_state(self.env, x)
             u = self._clip_action(u_seq[t])
-            _, r, term, trunc, _ = self.env.step(u)
+            _, r, term, trunc, _ = self._rollout_env.step(u)
             x = np.asarray(get_state(self.env), dtype=float)
             xs.append(x.copy())
             total_cost += -float(r)
@@ -154,14 +159,21 @@ class ILQR(BaseController):
         xs, best_cost = self._rollout(state0, u_seq)
 
         for _ in range(self.iterations):
-            K, k = self._backward_pass(xs[: len(u_seq)], u_seq)
+            # A rollout can terminate before the full horizon (a genuinely
+            # terminating env, e.g. the ant falling), leaving fewer states than
+            # controls. Only optimize over the segment we actually have a
+            # trajectory for; controls past it stay at their nominal value.
+            H = min(len(u_seq), len(xs) - 1)
+            if H <= 0:
+                break
+            K, k = self._backward_pass(xs[:H], u_seq[:H])
             improved = False
             for alpha in self.line_search_steps:
                 if alpha == 0.0:
                     break  # no-op fallback: keep current nominal
-                u_try = np.zeros_like(u_seq)
+                u_try = u_seq.copy()
                 x = state0.copy()
-                for t in range(len(u_seq)):
+                for t in range(H):
                     u_try[t] = self._clip_action(
                         u_seq[t] + alpha * k[t] + K[t] @ (x - xs[t])
                     )

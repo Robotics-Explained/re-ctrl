@@ -40,11 +40,73 @@ def make(name: str, env: Any, **kwargs: Any) -> "BaseController":
     """Construct a controller by name: ``make("mppi", env, ...)``."""
     if name not in _REGISTRY:
         raise KeyError(f"unknown controller {name!r}; available: {sorted(_REGISTRY)}")
+    _reject_raw_vector_env(env)
     return _REGISTRY[name](env, **kwargs)
+
+
+def _reject_raw_vector_env(env: Any) -> None:
+    """Guard against handing a raw ``gymnasium.vector.VectorEnv`` to a controller.
+
+    Its *batched* spaces would size the networks wrong (``obs_dim`` would come
+    out as ``num_envs * obs_dim``) and its ``reset``/``step`` signature doesn't
+    match the on-device vectorized trainer, so ``learn()`` would crash. Route
+    vectorized envs through :meth:`Trainer.auto`, which wraps them
+    (``GymVectorAdapter``) and picks a convergence-safe update ratio. A native
+    ``tau_ctrl`` ``TorchVecEnv`` (incl. the adapters) is fine and passes through.
+    """
+    try:
+        import gymnasium  # noqa: PLC0415
+
+        is_gym_vec = isinstance(env, gymnasium.vector.VectorEnv)
+    except Exception:
+        is_gym_vec = False
+    if is_gym_vec:
+        raise TypeError(
+            "make() received a gymnasium.vector.VectorEnv, which cannot be used "
+            "directly (its batched spaces mis-size the networks). Train vectorized "
+            "envs via Trainer.auto, which adapts them to the on-device loop:\n"
+            "    from tau_ctrl import Trainer\n"
+            "    model = Trainer.auto('sac', env=vec_env, total_timesteps=...)"
+        )
 
 
 def available() -> list[str]:
     return sorted(_REGISTRY)
+
+
+def require_torch():
+    """Import and return torch, or raise a clear, actionable error.
+
+    The RL methods (PPO/SAC/TD3) and ``Trainer.auto`` need PyTorch, which ships
+    only via the optional extra. Without this, a user hits a bare
+    ``ModuleNotFoundError: No module named 'torch'`` with no hint of the fix.
+    """
+    try:
+        import torch  # noqa: PLC0415
+    except ImportError as e:
+        raise ImportError(
+            "PyTorch is required for the RL methods (PPO/SAC/TD3) and Trainer.auto, "
+            "but it is not installed. Install it with:\n"
+            "    pip install tau-ctrl[torch]"
+        ) from e
+    return torch
+
+
+def require_box_action_space(action_space: Any, algo: str) -> None:
+    """Reject non-continuous action spaces up front with a clear message.
+
+    PID and the RL/MPC controllers all assume a continuous ``Box`` action
+    space; handing them a ``Discrete`` env otherwise fails deep inside with an
+    opaque ``AttributeError: 'Discrete' object has no attribute 'low'``.
+    """
+    from gymnasium import spaces  # noqa: PLC0415
+
+    if not isinstance(action_space, spaces.Box):
+        raise TypeError(
+            f"{algo} requires a continuous Box action space, got "
+            f"{type(action_space).__name__}. These controllers are for continuous "
+            "control; discrete-action envs are not supported."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -73,23 +135,31 @@ class BranchingNotSupported(RuntimeError):
 def get_state(env: Any) -> Any:
     """Snapshot the env's dynamical state so a rollout can branch from it.
 
-    Resolution order (no simulator assumptions): an explicit ``get_state`` on
-    the (unwrapped) env, else classic-control ``.state``. Simulators that want
-    model-based control just expose ``get_state``/``set_state``.
+    Resolution order (no simulator assumptions): an explicit ``get_state``
+    anywhere on the wrapper stack — the env itself or a branchable wrapper such
+    as :class:`~tau_ctrl.algorithms.mujoco.MujocoBranchable` layered over a sim
+    that doesn't expose state natively — else classic-control ``.state``.
+    Simulators that want model-based control just expose ``get_state``/``set_state``.
     """
     u = getattr(env, "unwrapped", env)
+    if hasattr(env, "get_state"):
+        return env.get_state()
     if hasattr(u, "get_state"):
         return u.get_state()
     if hasattr(u, "state") and u.state is not None:
         return np.array(u.state, dtype=float)
     raise BranchingNotSupported(
         f"{type(u).__name__} exposes no get_state()/.state; model-based methods "
-        "(MPPI/CEM/CBF) need a branchable env."
+        "(MPPI/CEM/CBF) need a branchable env. For MuJoCo envs, wrap with "
+        "tau_ctrl.MujocoBranchable(env)."
     )
 
 
 def set_state(env: Any, state: Any) -> None:
     u = getattr(env, "unwrapped", env)
+    if hasattr(env, "set_state"):
+        env.set_state(state)
+        return
     if hasattr(u, "set_state"):
         u.set_state(state)
         return

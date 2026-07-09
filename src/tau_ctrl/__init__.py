@@ -20,10 +20,15 @@ Model-based methods (MPPI/CEM/ICEM/ILQR/CBF) need the env to be *branchable*
 env. :mod:`tau_ctrl.tuning` adds Bayesian/genetic auto-tuning of any gains.
 """
 
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
+
+try:
+    __version__ = _pkg_version("tau-ctrl")
+except PackageNotFoundError:  # not installed (e.g. running from a source checkout)
+    __version__ = "0.0.0+unknown"
 
 from .algorithms import (
-    CBFFilter,
     CEM,
     ICEM,
     ILQR,
@@ -33,7 +38,9 @@ from .algorithms import (
     SAC,
     TD3,
     BaseController,
+    CBFFilter,
     ControllerManifest,
+    MujocoBranchable,
     Trainer,
     available,
     get_state,
@@ -63,6 +70,7 @@ __all__ = [
     "ICEM",
     "ILQR",
     "CBFFilter",
+    "MujocoBranchable",
     "PPO",
     "SAC",
     "TD3",

@@ -37,6 +37,7 @@ from .base import (
 from .cbf import CBFFilter
 from .ilqr import ILQR
 from .mppi import CEM, ICEM, MPPI
+from .mujoco import MujocoBranchable
 from .pid import PID
 from .ppo import PPO
 from .sac import SAC
@@ -71,6 +72,7 @@ __all__ = [
     "ICEM",
     "ILQR",
     "CBFFilter",
+    "MujocoBranchable",
     "PPO",
     "SAC",
     "TD3",

@@ -4,6 +4,31 @@ All notable changes to `tau-ctrl` are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is
 [SemVer](https://semver.org/).
 
+## [0.2.0]
+
+### Added
+- **`MujocoBranchable`** wrapper — makes any Gymnasium MuJoCo env (built-in or a
+  custom `MujocoEnv` subclass) branchable for the model-based controllers by
+  snapshotting/restoring MuJoCo's full physics state. `MPPI/CEM/ICEM/ILQR/CBF`
+  now run on MuJoCo tasks: `make("mppi", MujocoBranchable(gym.make("HalfCheetah-v5")))`.
+
+### Fixed
+- **Model-based planners no longer corrupt or crash on wrapped `gym.make()` envs.**
+  MPPI/CEM/ICEM/ILQR now roll candidate sequences out against the *unwrapped* env,
+  so a `predict()` no longer advances `TimeLimit`'s counter (which silently
+  truncated the live episode) — and ILQR no longer raises `IndexError` when a
+  rollout would trip truncation.
+- `tau_ctrl.__version__` now reflects the installed package (was hard-coded `0.1.0`).
+- Clear errors instead of opaque failures: discrete-action envs
+  (`TypeError: … requires a continuous Box action space`), a raw
+  `gymnasium.vector.VectorEnv` passed to `make()` (points to `Trainer.auto`), and
+  RL used without PyTorch (points to `pip install tau-ctrl[torch]`).
+
+### Changed
+- `get_state`/`set_state` now honor a branching contract provided anywhere on the
+  wrapper stack (not only the unwrapped env), so branchable wrappers compose with
+  `TimeLimit` and friends.
+
 ## [Unreleased]
 
 ### Added
