@@ -4,6 +4,22 @@ All notable changes to `tau-ctrl` are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is
 [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`GRPO`** — a critic-free policy gradient for branchable envs. At each real
+  step it branches `group_size` candidate actions from the *live* state
+  (reusing the `get_state`/`set_state` contract MPPI/CEM/ILQR already use),
+  scores them with group-relative (z-scored) returns instead of a learned
+  value function, and updates with a PPO-style clipped surrogate. Benchmarked
+  against PPO/SAC on Pendulum-v1 and HalfCheetah-v5 (dense reward) and a
+  sparse/terminal-reward pendulum variant (3 seeds each, matched training
+  budgets): GRPO consistently edges out PPO under sparse/terminal reward
+  (mean −573 vs −588, low variance both) — the critic-free ranking sidesteps
+  PPO's bootstrapping difficulty there — but **SAC's replay buffer still wins
+  both the dense and sparse settings tested**. GRPO is offered for the
+  branchable + sparse-reward niche, not as a general PPO/SAC replacement.
+
 ## [0.2.0]
 
 ### Added

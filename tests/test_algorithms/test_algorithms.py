@@ -26,7 +26,9 @@ def rollout(env, ctrl, steps, reset_ctrl=True):
 # --------------------------------------------------------------------------
 
 def test_registry_lists_all_methods():
-    assert set(available()) >= {"pid", "mppi", "cem", "icem", "ilqr", "cbf", "ppo", "sac", "td3"}
+    assert set(available()) >= {
+        "pid", "mppi", "cem", "icem", "ilqr", "cbf", "ppo", "sac", "td3", "grpo",
+    }
 
 
 def test_make_constructs_controller():
